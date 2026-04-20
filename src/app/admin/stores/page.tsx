@@ -71,11 +71,8 @@ export default async function AdminStoresPage() {
 
 function AdminDeleteStore({ storeId, storeName }: { storeId: string; storeName: string }) {
   return (
-    <form action={`/api/admin/stores/${storeId}/delete`} method="POST"
-      onSubmit={(e) => { if (!confirm(`למחוק את ${storeName}?`)) e.preventDefault(); }}>
-      <button type="submit" className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors">
-        <Trash2 className="h-3.5 w-3.5" />
-      </button>
-    </form>
+    <button className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors">
+      <Trash2 className="h-3.5 w-3.5" />
+    </button>
   );
 }
