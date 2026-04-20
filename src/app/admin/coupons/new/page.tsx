@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { CouponForm } from '@/components/admin/coupon-form';
 import { adminGetStores } from '@/lib/db';
 import Link from 'next/link';
