@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { adminGetStores, adminGetCoupons } from '@/lib/db';
 import { Store, Tag, Users, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
