@@ -10,12 +10,22 @@ export async function POST(req: NextRequest) {
     await db.from('faqs').delete().eq('store_id', store_id);
 
     // הוסף שאלות חדשות
-    if (faqs && faqs.length > 0) {
-      const { error } = await db.from('faqs').insert(faqs);
-      if (error) throw error;
+    const validFaqs = faqs
+      .filter((f: any) => f.question && f.answer)
+      .map((f: any, i: number) => ({
+        store_id,
+        question: f.question,
+        answer: f.answer,
+        display_order: i,
+        is_active: true,
+      }));
+
+    if (validFaqs.length > 0) {
+      const { error } = await db.from('faqs').insert(validFaqs);
+      if (error) throw new Error(error.message);
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, count: validFaqs.length });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 400 });
   }
