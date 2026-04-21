@@ -1,14 +1,18 @@
 import { notFound } from 'next/navigation';
 import { StoreForm } from '@/components/admin/store-form';
-import { adminGetStores, getCategories } from '@/lib/db';
+import { adminGetStores, getCategories, getFAQsByStore } from '@/lib/db';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
+
+export const dynamic = 'force-dynamic';
 
 export default async function EditStorePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const [stores, categories] = await Promise.all([adminGetStores(), getCategories()]);
   const store = stores.find(s => s.id === id);
   if (!store) notFound();
+
+  const faqs = await getFAQsByStore(id);
 
   return (
     <div className="p-8 max-w-3xl">
@@ -21,7 +25,7 @@ export default async function EditStorePage({ params }: { params: Promise<{ id: 
         <span className="text-sm font-medium">{store.name}</span>
       </div>
       <h1 className="text-2xl font-black mb-6">עריכת {store.name}</h1>
-      <StoreForm store={store} categories={categories} />
+      <StoreForm store={store} categories={categories} initialFaqs={faqs} />
     </div>
   );
 }
