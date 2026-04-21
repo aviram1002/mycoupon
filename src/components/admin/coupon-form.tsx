@@ -45,7 +45,7 @@ export function CouponForm({ coupon, stores }: CouponFormProps) {
       const payload = {
         ...form,
         discount_value: form.discount_value ? parseFloat(form.discount_value) : null,
-        badge: form.badge || null,
+        badge: form.badge === 'none' ? null : form.badge || null,
         expires_at: form.expires_at ? new Date(form.expires_at).toISOString() : null,
       };
       const url = isEdit ? `/api/admin/coupons/${coupon!.id}` : '/api/admin/coupons';
@@ -153,7 +153,7 @@ export function CouponForm({ coupon, stores }: CouponFormProps) {
             <Select value={form.badge} onValueChange={v => setForm(f => ({ ...f, badge: v }))}>
               <SelectTrigger><SelectValue placeholder="ללא תג" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="">ללא תג</SelectItem>
+                <SelectItem value="none">ללא תג</SelectItem>
                 <SelectItem value="exclusive">בלעדי</SelectItem>
                 <SelectItem value="verified">מאומת</SelectItem>
                 <SelectItem value="popular">פופולרי</SelectItem>
