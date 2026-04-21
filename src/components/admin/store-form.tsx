@@ -21,6 +21,11 @@ export function StoreForm({ store, categories, initialFaqs = [] }: StoreFormProp
   const isEdit = !!store;
   const [loading, setLoading] = useState(false);
   const [faqs, setFaqs] = useState<FAQ[]>(initialFaqs.length > 0 ? initialFaqs : []);
+useEffect(() => {
+  if (initialFaqs && initialFaqs.length > 0) {
+    setFaqs(initialFaqs);
+  }
+}, [initialFaqs]);
 
   const [form, setForm] = useState({
     name: store?.name || '',
