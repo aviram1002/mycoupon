@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
@@ -19,11 +22,6 @@ import type { CouponFilters } from '@/types';
 interface StorePageProps {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ type?: string; status?: string; sort?: string }>;
-}
-
-export async function generateStaticParams() {
-  const slugs = await getAllStoreSlugs();
-  return slugs.map(slug => ({ slug }));
 }
 
 export async function generateMetadata({ params }: StorePageProps): Promise<Metadata> {
@@ -69,30 +67,21 @@ export default async function StorePage({ params, searchParams }: StorePageProps
 
   return (
     <>
-      {/* JSON-LD */}
       {schemas.map((schema, i) => (
         <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
       ))}
 
-      {/* Canonical for filtered pages */}
-      {hasFilters && (
-        <link rel="canonical" href={canonical} />
-      )}
+      {hasFilters && <link rel="canonical" href={canonical} />}
 
       <div className="container py-6">
-        {/* Breadcrumbs */}
-        <Breadcrumbs
-          items={[
-            { label: 'ראשי', href: '/' },
-            { label: 'חנויות', href: '/stores' },
-            { label: store.name },
-          ]}
-        />
+        <Breadcrumbs items={[
+          { label: 'ראשי', href: '/' },
+          { label: 'חנויות', href: '/stores' },
+          { label: store.name },
+        ]} />
 
-        {/* Store Hero */}
         <div className="mt-6 bg-card rounded-2xl border p-6 md:p-8">
           <div className="flex flex-col md:flex-row md:items-start gap-6">
-            {/* Logo */}
             <div className="w-24 h-24 rounded-2xl bg-muted border flex items-center justify-center overflow-hidden flex-shrink-0">
               {store.logo_url ? (
                 <Image src={store.logo_url} alt={store.name} width={96} height={96} className="object-contain" />
@@ -100,8 +89,6 @@ export default async function StorePage({ params, searchParams }: StorePageProps
                 <span className="text-3xl font-black text-muted-foreground">{store.name[0]}</span>
               )}
             </div>
-
-            {/* Info */}
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2 flex-wrap">
                 <h1 className="text-2xl font-black">{store.name}</h1>
@@ -109,13 +96,11 @@ export default async function StorePage({ params, searchParams }: StorePageProps
                   חנות מאושרת
                 </span>
               </div>
-
               {store.description && (
                 <p className="text-muted-foreground text-sm leading-relaxed mb-4 max-w-2xl">
                   {store.description}
                 </p>
               )}
-
               <div className="flex items-center gap-3 flex-wrap">
                 <Button asChild variant="outline" size="sm" className="gap-2">
                   <a href={store.affiliate_url || store.website_url || '#'} target="_blank" rel="noopener noreferrer">
@@ -132,19 +117,13 @@ export default async function StorePage({ params, searchParams }: StorePageProps
           </div>
         </div>
 
-        {/* Coupons Section */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-6">
-          {/* Sidebar Filters */}
           <aside className="md:col-span-1">
             <CouponFiltersBar filters={filters} />
           </aside>
-
-          {/* Coupon Grid */}
           <div className="md:col-span-3">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold">
-                קופונים זמינים ({coupons.length})
-              </h2>
+              <h2 className="text-lg font-bold">קופונים זמינים ({coupons.length})</h2>
             </div>
             <CouponGrid
               coupons={coupons}
@@ -153,41 +132,25 @@ export default async function StorePage({ params, searchParams }: StorePageProps
           </div>
         </div>
 
-        {/* FAQ Section */}
         <FAQSection faqs={faqs} storeName={store.name} />
 
-        {/* SEO Text */}
         {store.description && (
           <section className="mt-12 bg-muted/30 rounded-2xl p-6 md:p-8">
-            <h2 className="text-xl font-bold mb-4">
-              קופונים ל-{store.name}: כל מה שצריך לדעת לחסוך
-            </h2>
+            <h2 className="text-xl font-bold mb-4">קופונים ל-{store.name}: כל מה שצריך לדעת לחסוך</h2>
             <div className="prose prose-sm max-w-none text-muted-foreground leading-relaxed">
-              <p>
-                {store.name} {store.description} אנחנו מרכזים את כל הקופונים המאומתים, הנחות לעדויות ומבצעים
-                שאי אפספסס לאתרים המובילים בישראל ובעולם כדי שתוכלו לקנות יותר בפחות.
-              </p>
+              <p>{store.name} {store.description} אנחנו מרכזים את כל הקופונים המאומתים, הנחות ומבצעים שאי אפשר לפספס.</p>
               <p className="mt-3">
-                איך משתמשים בקופון ב-{store.name}? פשוט מאוד – בחרו קופון, לחצו על &quot;קבל קוד&quot;,
-                העתיקו את הקוד ולחצו &quot;מעבר לחנות&quot;. הדביקו את הקוד בשדה הייעודי בקופה. המערכת שלנו
-                בודקת את הקופונים מדי יום כדי להבטיח שאתם תמיד מקבלים הנחות שעובדות.
+                איך משתמשים בקופון ב-{store.name}? בחרו קופון, לחצו על &quot;קבל קוד&quot;, העתיקו את הקוד ולחצו &quot;מעבר לחנות&quot;.
               </p>
             </div>
           </section>
         )}
 
-        {/* Similar Stores */}
         {similarStores.length > 0 && (
           <section className="mt-12">
-            <SectionTitle
-              title="חנויות דומות שיעניינו אותך"
-              viewAllHref="/stores"
-              viewAllLabel="+ צפה בכל המנויות"
-            />
+            <SectionTitle title="חנויות דומות שיעניינו אותך" viewAllHref="/stores" viewAllLabel="+ צפה בכל החנויות" />
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-              {similarStores.map(s => (
-                <StoreCard key={s.id} store={s} size="sm" />
-              ))}
+              {similarStores.map(s => <StoreCard key={s.id} store={s} size="sm" />)}
             </div>
           </section>
         )}
