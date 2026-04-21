@@ -20,7 +20,7 @@ export function StoreForm({ store, categories, initialFaqs = [] }: StoreFormProp
   const router = useRouter();
   const isEdit = !!store;
   const [loading, setLoading] = useState(false);
-  const [faqs, setFaqs] = useState<FAQ[]>(initialFaqs.length > 0 ? initialFaqs : []);
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
 useEffect(() => {
   if (initialFaqs && initialFaqs.length > 0) {
     setFaqs(initialFaqs);
