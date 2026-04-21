@@ -31,7 +31,7 @@ export function FAQForm({ faq, stores }: FAQFormProps) {
       const res = await fetch(url, {
         method: isEdit ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, store_id: form.store_id || null }),
+        body: JSON.stringify({ ...form, store_id: form.store_id === 'none' ? null : form.store_id || null }),
       });
       if (!res.ok) throw new Error();
       toast.success(isEdit ? 'השאלה עודכנה' : 'השאלה נוצרה');
@@ -52,7 +52,7 @@ export function FAQForm({ faq, stores }: FAQFormProps) {
           <Select value={form.store_id} onValueChange={v => setForm(f => ({ ...f, store_id: v }))}>
             <SelectTrigger><SelectValue placeholder="שאלה כללית (לא מקושרת לחנות)" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="">כללי</SelectItem>
+              <SelectItem value="none">כללי</SelectItem>
               {stores.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
             </SelectContent>
           </Select>
