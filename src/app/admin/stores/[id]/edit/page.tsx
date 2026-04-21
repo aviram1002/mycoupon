@@ -25,7 +25,7 @@ export default async function EditStorePage({ params }: { params: Promise<{ id: 
         <span className="text-sm font-medium">{store.name}</span>
       </div>
       <h1 className="text-2xl font-black mb-6">עריכת {store.name}</h1>
-      <StoreForm store={store} categories={categories} initialFaqs={faqs} />
+      <StoreForm key={store.id} store={store} categories={categories} initialFaqs={faqs} />
     </div>
   );
 }
