@@ -7,14 +7,26 @@ export async function GET(req: NextRequest) {
 
   const db = getSupabaseServerClient();
 
-  const { data, error } = await db
+  // Search coupons
+  const { data: coupons } = await db
     .from('coupons')
     .select('id, title, description, code, discount_value, discount_type, coupon_type, slug, store:stores(name, logo_url, slug)')
     .eq('is_active', true)
     .or(`title.ilike.%${q}%,description.ilike.%${q}%,code.ilike.%${q}%`)
     .order('uses_count', { ascending: false })
-    .limit(20);
+    .limit(10);
 
-  if (error) return NextResponse.json([], { status: 500 });
-  return NextResponse.json(data ?? []);
+  // Search stores
+  const { data: stores } = await db
+    .from('stores')
+    .select('id, name, logo_url, slug')
+    .eq('is_active', true)
+    .ilike('name', `%${q}%`)
+    .limit(5);
+
+  const couponResults = (coupons ?? []).map(c => ({ ...c, type: 'coupon' as const }));
+  const storeResults = (stores ?? []).map(s => ({ ...s, type: 'store' as const }));
+
+  // Stores first, then coupons
+  return NextResponse.json([...storeResults, ...couponResults]);
 }
