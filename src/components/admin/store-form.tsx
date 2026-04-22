@@ -1,8 +1,8 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Upload, Link, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input, Textarea, Label, Switch } from '@/components/ui/form-elements';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/form-elements';
@@ -16,16 +16,23 @@ interface StoreFormProps {
   initialFaqs?: FAQ[];
 }
 
+type LogoMode = 'url' | 'upload';
+
 export function StoreForm({ store, categories, initialFaqs = [] }: StoreFormProps) {
   const router = useRouter();
   const isEdit = !!store;
   const [loading, setLoading] = useState(false);
   const [faqs, setFaqs] = useState<FAQ[]>([]);
-useEffect(() => {
-  if (initialFaqs && initialFaqs.length > 0) {
-    setFaqs(initialFaqs);
-  }
-}, [initialFaqs]);
+  const [logoMode, setLogoMode] = useState<LogoMode>('url');
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string>(store?.logo_url || '');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (initialFaqs && initialFaqs.length > 0) {
+      setFaqs(initialFaqs);
+    }
+  }, [initialFaqs]);
 
   const [form, setForm] = useState({
     name: store?.name || '',
@@ -59,11 +66,44 @@ useEffect(() => {
     setFaqs(f => f.map((faq, idx) => idx === i ? { ...faq, [field]: value } : faq));
   }
 
+  async function handleFileUpload(file: File) {
+    if (!file) return;
+    setUploadLoading(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'שגיאה בהעלאה');
+      }
+      const { url } = await res.json();
+      setForm(f => ({ ...f, logo_url: url }));
+      setPreviewUrl(url);
+      toast.success('הלוגו הועלה בהצלחה');
+    } catch (e: any) {
+      toast.error(e.message || 'שגיאה בהעלאת הקובץ');
+    } finally {
+      setUploadLoading(false);
+    }
+  }
+
+  function handleFileDrop(e: React.DragEvent) {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file) handleFileUpload(file);
+  }
+
+  function clearLogo() {
+    setForm(f => ({ ...f, logo_url: '' }));
+    setPreviewUrl('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     try {
-      // Save store
       const url = isEdit ? `/api/admin/stores/${store!.id}` : '/api/admin/stores';
       const res = await fetch(url, {
         method: isEdit ? 'PUT' : 'POST',
@@ -74,7 +114,6 @@ useEffect(() => {
       const savedStore = await res.json();
       const storeId = savedStore.id;
 
-      // Save FAQs
       if (faqs.length > 0) {
         await fetch('/api/admin/faqs/bulk', {
           method: 'POST',
@@ -124,10 +163,127 @@ useEffect(() => {
             <Label htmlFor="affiliate_url">לינק אפיליאציה</Label>
             <Input id="affiliate_url" type="url" value={form.affiliate_url} onChange={e => setForm(f => ({ ...f, affiliate_url: e.target.value }))} />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="logo_url">URL לוגו</Label>
-            <Input id="logo_url" type="url" value={form.logo_url} onChange={e => setForm(f => ({ ...f, logo_url: e.target.value }))} />
+
+          {/* ===== שדה לוגו משודרג ===== */}
+          <div className="space-y-2 md:col-span-2">
+            <Label>לוגו חנות</Label>
+
+            {/* Toggle */}
+            <div className="flex gap-2 mb-3">
+              <button
+                type="button"
+                onClick={() => setLogoMode('upload')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
+                  logoMode === 'upload'
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-background text-muted-foreground border-border hover:border-primary/50'
+                }`}
+              >
+                <Upload className="h-3.5 w-3.5" />
+                העלאת קובץ
+              </button>
+              <button
+                type="button"
+                onClick={() => setLogoMode('url')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
+                  logoMode === 'url'
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-background text-muted-foreground border-border hover:border-primary/50'
+                }`}
+              >
+                <Link className="h-3.5 w-3.5" />
+                הזנת URL
+              </button>
+            </div>
+
+            {/* Upload mode */}
+            {logoMode === 'upload' && (
+              <div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/webp,image/gif,image/svg+xml"
+                  className="hidden"
+                  onChange={e => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileUpload(file);
+                  }}
+                />
+                <div
+                  onClick={() => !uploadLoading && fileInputRef.current?.click()}
+                  onDragOver={e => e.preventDefault()}
+                  onDrop={handleFileDrop}
+                  className={`relative border-2 border-dashed rounded-xl p-6 text-center transition-all cursor-pointer
+                    ${uploadLoading ? 'opacity-60 cursor-not-allowed' : 'hover:border-primary/60 hover:bg-muted/30'}
+                    ${previewUrl && logoMode === 'upload' ? 'border-primary/40 bg-primary/5' : 'border-border'}
+                  `}
+                >
+                  {previewUrl ? (
+                    <div className="flex items-center justify-center gap-4">
+                      <img
+                        src={previewUrl}
+                        alt="לוגו"
+                        className="h-16 w-16 object-contain rounded-lg border bg-white p-1"
+                        onError={() => setPreviewUrl('')}
+                      />
+                      <div className="text-right">
+                        <p className="text-sm font-medium">לוגו הועלה בהצלחה</p>
+                        <p className="text-xs text-muted-foreground mt-0.5 max-w-xs truncate">{form.logo_url}</p>
+                        <button
+                          type="button"
+                          onClick={e => { e.stopPropagation(); clearLogo(); }}
+                          className="text-xs text-red-500 hover:text-red-700 mt-1 flex items-center gap-1"
+                        >
+                          <X className="h-3 w-3" /> הסר לוגו
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {uploadLoading ? (
+                        <p className="text-sm text-muted-foreground">מעלה קובץ...</p>
+                      ) : (
+                        <>
+                          <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
+                          <p className="text-sm font-medium">גרור תמונה לכאן או לחץ לבחירה</p>
+                          <p className="text-xs text-muted-foreground">JPG, PNG, WEBP, SVG — עד 2MB</p>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* URL mode */}
+            {logoMode === 'url' && (
+              <div className="space-y-2">
+                <Input
+                  id="logo_url"
+                  placeholder="https://example.com/logo.png  או  /logos/MyStore.webp"
+                  value={form.logo_url}
+                  onChange={e => {
+                    setForm(f => ({ ...f, logo_url: e.target.value }));
+                    setPreviewUrl(e.target.value);
+                  }}
+                  dir="ltr"
+                />
+                {previewUrl && (
+                  <div className="flex items-center gap-3 mt-2">
+                    <img
+                      src={previewUrl}
+                      alt="תצוגה מקדימה"
+                      className="h-12 w-12 object-contain rounded-lg border bg-white p-1"
+                      onError={() => setPreviewUrl('')}
+                    />
+                    <span className="text-xs text-muted-foreground">תצוגה מקדימה</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
+          {/* ===== סוף שדה לוגו ===== */}
+
           <div className="space-y-2">
             <Label htmlFor="category_id">קטגוריה</Label>
             <Select value={form.category_id} onValueChange={v => setForm(f => ({ ...f, category_id: v }))}>
