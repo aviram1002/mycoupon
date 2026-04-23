@@ -222,7 +222,7 @@ export function Header() {
                 <Link
                   key={`${item.type}-${item.id}`}
                   href={item.type === 'store' ? `/store/${item.slug}` : `/coupon/${item.slug}`}
-                  onClick={() => { setSearchOpen(false); clearSearch(); }}
+                  onClick={() => setTimeout(() => { setSearchOpen(false); clearSearch(); }, 100)}
                   className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted transition-colors border-b border-border/50 last:border-0"
                 >
                   {(item.store?.logo_url || item.logo_url) && (
