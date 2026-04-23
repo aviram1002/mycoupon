@@ -117,11 +117,11 @@ export default async function StorePage({ params, searchParams }: StorePageProps
           </div>
         </div>
 
+        {/* Layout: במובייל - קופונים קודם, סינון אחרי. בדסקטופ - סינון בצד */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-6">
-          <aside className="md:col-span-1">
-            <CouponFiltersBar filters={filters} />
-          </aside>
-          <div className="md:col-span-3">
+
+          {/* קופונים - מופיעים ראשונים במובייל (order-1), שניים בדסקטופ (col-span-3) */}
+          <div className="order-1 md:order-2 md:col-span-3">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold">קופונים זמינים ({coupons.length})</h2>
             </div>
@@ -130,6 +130,12 @@ export default async function StorePage({ params, searchParams }: StorePageProps
               emptyMessage={`אין קופונים זמינים ל-${store.name} עם הסינון הנוכחי`}
             />
           </div>
+
+          {/* סינון - מופיע שני במובייל (order-2), ראשון בדסקטופ (col-span-1) */}
+          <aside className="order-2 md:order-1 md:col-span-1">
+            <CouponFiltersBar filters={filters} />
+          </aside>
+
         </div>
 
         <FAQSection faqs={faqs} storeName={store.name} />
