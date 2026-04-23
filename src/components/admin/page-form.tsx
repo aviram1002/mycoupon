@@ -9,7 +9,7 @@ import {
   Heading1, Heading2, Heading3,
   List, ListOrdered, Link, Quote,
   AlignRight, AlignCenter, AlignLeft,
-  Undo, Redo
+  Undo, Redo, Type
 } from 'lucide-react';
 
 interface Page {
@@ -22,12 +22,7 @@ interface Page {
   is_published?: boolean;
 }
 
-type ToolbarButton = {
-  icon: React.ReactNode;
-  title: string;
-  action: () => void;
-  active?: boolean;
-} | { separator: true };
+const FONT_SIZES = [12, 14, 16, 18, 20, 22, 24, 28, 32, 36];
 
 export function PageForm({ page }: { page?: Page }) {
   const router = useRouter();
@@ -57,18 +52,58 @@ export function PageForm({ page }: { page?: Page }) {
     editorRef.current?.focus();
   }
 
+  function insertHeading(tag: string, size: string) {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+    const range = selection.getRangeAt(0);
+    const el = document.createElement(tag);
+    el.style.fontSize = size;
+    el.style.fontWeight = 'bold';
+    el.style.margin = '8px 0';
+    if (selection.toString()) {
+      el.appendChild(range.extractContents());
+    } else {
+      el.innerHTML = '&nbsp;';
+    }
+    range.deleteContents();
+    range.insertNode(el);
+    // Move cursor after element
+    range.setStartAfter(el);
+    range.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    editorRef.current?.focus();
+  }
+
+  function setFontSize(size: string) {
+    exec('fontSize', '7');
+    const fontElements = editorRef.current?.querySelectorAll('font[size="7"]');
+    fontElements?.forEach(el => {
+      (el as HTMLElement).removeAttribute('size');
+      (el as HTMLElement).style.fontSize = size + 'px';
+    });
+    editorRef.current?.focus();
+  }
+
   function insertLink() {
     const url = prompt('הכנס כתובת URL:');
     if (url) exec('createLink', url);
   }
 
-  const toolbar: ToolbarButton[] = [
+  type ToolbarItem =
+    | { icon: React.ReactNode; title: string; action: () => void }
+    | { separator: true }
+    | { fontSize: true };
+
+  const toolbar: ToolbarItem[] = [
     { icon: <Undo className="h-4 w-4" />, title: 'בטל', action: () => exec('undo') },
     { icon: <Redo className="h-4 w-4" />, title: 'חזור', action: () => exec('redo') },
     { separator: true },
-    { icon: <Heading1 className="h-4 w-4" />, title: 'כותרת 1', action: () => exec('formatBlock', 'h1') },
-    { icon: <Heading2 className="h-4 w-4" />, title: 'כותרת 2', action: () => exec('formatBlock', 'h2') },
-    { icon: <Heading3 className="h-4 w-4" />, title: 'כותרת 3', action: () => exec('formatBlock', 'h3') },
+    { icon: <span className="text-xs font-bold">H1</span>, title: 'כותרת 1 (25px)', action: () => insertHeading('h1', '25px') },
+    { icon: <span className="text-xs font-bold">H2</span>, title: 'כותרת 2 (22px)', action: () => insertHeading('h2', '22px') },
+    { icon: <span className="text-xs font-bold">H3</span>, title: 'כותרת 3 (21px)', action: () => insertHeading('h3', '21px') },
+    { separator: true },
+    { fontSize: true },
     { separator: true },
     { icon: <Bold className="h-4 w-4" />, title: 'מודגש', action: () => exec('bold') },
     { icon: <Italic className="h-4 w-4" />, title: 'נטוי', action: () => exec('italic') },
@@ -80,9 +115,9 @@ export function PageForm({ page }: { page?: Page }) {
     { icon: <Quote className="h-4 w-4" />, title: 'ציטוט', action: () => exec('formatBlock', 'blockquote') },
     { icon: <Link className="h-4 w-4" />, title: 'קישור', action: insertLink },
     { separator: true },
-    { icon: <AlignRight className="h-4 w-4" />, title: 'יישור ימין', action: () => exec('justifyRight') },
+    { icon: <AlignRight className="h-4 w-4" />, title: 'ימין', action: () => exec('justifyRight') },
     { icon: <AlignCenter className="h-4 w-4" />, title: 'מרכז', action: () => exec('justifyCenter') },
-    { icon: <AlignLeft className="h-4 w-4" />, title: 'יישור שמאל', action: () => exec('justifyLeft') },
+    { icon: <AlignLeft className="h-4 w-4" />, title: 'שמאל', action: () => exec('justifyLeft') },
   ];
 
   async function handleSubmit(e: React.FormEvent) {
@@ -109,7 +144,6 @@ export function PageForm({ page }: { page?: Page }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* תוכן */}
       <div className="bg-card rounded-2xl border p-6 space-y-4">
         <h2 className="font-bold">תוכן הדף</h2>
 
@@ -126,45 +160,58 @@ export function PageForm({ page }: { page?: Page }) {
           <p className="text-xs text-muted-foreground">הדף יהיה זמין בכתובת: /{form.slug}</p>
         </div>
 
-        {/* Editor */}
         <div className="space-y-1">
           <Label>תוכן</Label>
           <div className="border border-border rounded-xl overflow-hidden">
             {/* Toolbar */}
             <div className="flex flex-wrap items-center gap-0.5 p-2 border-b border-border bg-muted/30">
-              {toolbar.map((btn, i) => {
-                if ('separator' in btn) {
+              {toolbar.map((item, i) => {
+                if ('separator' in item) {
                   return <div key={i} className="w-px h-5 bg-border mx-1" />;
+                }
+                if ('fontSize' in item) {
+                  return (
+                    <select
+                      key={i}
+                      title="גודל פונט"
+                      onMouseDown={e => e.preventDefault()}
+                      onChange={e => { setFontSize(e.target.value); e.target.value = ''; }}
+                      className="h-7 px-1 text-xs rounded-lg border border-border bg-background text-muted-foreground hover:text-foreground cursor-pointer"
+                    >
+                      <option value="">גודל</option>
+                      {FONT_SIZES.map(s => (
+                        <option key={s} value={s}>{s}px</option>
+                      ))}
+                    </select>
+                  );
                 }
                 return (
                   <button
                     key={i}
                     type="button"
-                    title={btn.title}
-                    onMouseDown={e => { e.preventDefault(); btn.action(); }}
-                    className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                    title={item.title}
+                    onMouseDown={e => { e.preventDefault(); item.action(); }}
+                    className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors min-w-[28px] flex items-center justify-center"
                   >
-                    {btn.icon}
+                    {item.icon}
                   </button>
                 );
               })}
             </div>
 
-            {/* Editable area */}
+            {/* Editor */}
             <div
               ref={editorRef}
               contentEditable
               suppressContentEditableWarning
               dir="rtl"
-              className="min-h-64 p-4 text-sm leading-relaxed focus:outline-none prose prose-sm max-w-none"
+              className="min-h-72 p-4 text-sm leading-relaxed focus:outline-none"
               style={{ direction: 'rtl' }}
-              data-placeholder="התחל לכתוב את תוכן הדף כאן..."
             />
           </div>
         </div>
       </div>
 
-      {/* SEO */}
       <div className="bg-card rounded-2xl border p-6 space-y-4">
         <h2 className="font-bold">SEO</h2>
         <div className="space-y-2">
@@ -178,7 +225,6 @@ export function PageForm({ page }: { page?: Page }) {
         </div>
       </div>
 
-      {/* פרסום */}
       <div className="bg-card rounded-2xl border p-6">
         <div className="flex items-center justify-between">
           <div>
