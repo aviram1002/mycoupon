@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import { Search, Tag, Menu, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -26,6 +27,7 @@ interface SearchResult {
 }
 
 export function Header() {
+  const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -35,10 +37,21 @@ export function Header() {
   const inputRef = useRef<HTMLInputElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  // Close search on outside click
+  // Close search when navigating to a new page
+  useEffect(() => {
+    setSearchOpen(false);
+    setMenuOpen(false);
+    clearSearch();
+  }, [pathname]);
+
+  // Close desktop search on outside click (only desktop)
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(e.target as Node) &&
+        window.innerWidth >= 768
+      ) {
         setSearchOpen(false);
       }
     }
@@ -84,6 +97,36 @@ export function Header() {
     setSearched(false);
   }
 
+  const ResultItem = ({ item, mobile = false }: { item: SearchResult; mobile?: boolean }) => (
+    <Link
+      key={`${item.type}-${item.id}`}
+      href={item.type === 'store' ? `/store/${item.slug}` : `/coupon/${item.slug}`}
+      className={`flex items-center gap-3 hover:bg-muted transition-colors border-b border-border/50 last:border-0 ${mobile ? 'px-3 py-2.5' : 'px-4 py-3'}`}
+    >
+      {(item.store?.logo_url || item.logo_url) && (
+        <div className={`rounded-lg border bg-white flex items-center justify-center shrink-0 overflow-hidden ${mobile ? 'w-7 h-7' : 'w-8 h-8'}`}>
+          <Image
+            src={item.store?.logo_url || item.logo_url || ''}
+            alt=""
+            width={mobile ? 28 : 32}
+            height={mobile ? 28 : 32}
+            className="object-contain"
+          />
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium truncate">{item.title || item.name}</p>
+        {item.store && <p className="text-xs text-muted-foreground">{item.store.name}</p>}
+        {item.type === 'store' && !item.store && <p className="text-xs text-muted-foreground">חנות</p>}
+      </div>
+      {getDiscountLabel(item) && (
+        <span className="text-xs font-bold bg-brand/10 text-brand px-2 py-0.5 rounded-full shrink-0">
+          {getDiscountLabel(item)}
+        </span>
+      )}
+    </Link>
+  );
+
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="container flex h-16 items-center justify-between gap-4">
@@ -96,9 +139,9 @@ export function Header() {
           <span className="hidden sm:inline">הקופון שלי</span>
         </Link>
 
-        {/* Search bar - Desktop (expands in header) */}
+        {/* Search bar - Desktop */}
         <div ref={searchRef} className="hidden md:flex flex-1 max-w-md relative">
-          <div className={`relative w-full transition-all duration-200`}>
+          <div className="relative w-full">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <input
               ref={inputRef}
@@ -117,8 +160,7 @@ export function Header() {
             )}
           </div>
 
-          {/* Dropdown results */}
-          {searchOpen && (query.length >= 2) && (
+          {searchOpen && query.length >= 2 && (
             <div className="absolute top-full mt-2 right-0 w-full bg-background border border-border rounded-2xl shadow-xl z-50 overflow-hidden max-h-80 overflow-y-auto">
               {loading && (
                 <div className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
@@ -128,40 +170,9 @@ export function Header() {
               {!loading && searched && results.length === 0 && (
                 <div className="py-6 text-center text-sm text-muted-foreground">לא נמצאו תוצאות</div>
               )}
-              {!loading && results.length > 0 && (
-                <div>
-                  {results.map(item => (
-                    <Link
-                      key={`${item.type}-${item.id}`}
-                      href={item.type === 'store' ? `/store/${item.slug}` : `/coupon/${item.slug}`}
-                      onClick={() => { setSearchOpen(false); clearSearch(); }}
-                      className="flex items-center gap-3 px-4 py-3 hover:bg-muted transition-colors border-b border-border/50 last:border-0"
-                    >
-                      {(item.store?.logo_url || item.logo_url) && (
-                        <div className="w-8 h-8 rounded-lg border bg-white flex items-center justify-center shrink-0 overflow-hidden">
-                          <Image
-                            src={item.store?.logo_url || item.logo_url || ''}
-                            alt=""
-                            width={32}
-                            height={32}
-                            className="object-contain"
-                          />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{item.title || item.name}</p>
-                        {item.store && <p className="text-xs text-muted-foreground">{item.store.name}</p>}
-                        {item.type === 'store' && <p className="text-xs text-muted-foreground">חנות</p>}
-                      </div>
-                      {getDiscountLabel(item) && (
-                        <span className="text-xs font-bold bg-brand/10 text-brand px-2 py-0.5 rounded-full shrink-0">
-                          {getDiscountLabel(item)}
-                        </span>
-                      )}
-                    </Link>
-                  ))}
-                </div>
-              )}
+              {!loading && results.length > 0 && results.map(item => (
+                <ResultItem key={`${item.type}-${item.id}`} item={item} />
+              ))}
             </div>
           )}
         </div>
@@ -186,7 +197,7 @@ export function Header() {
         </div>
       </div>
 
-      {/* Mobile Search Bar */}
+      {/* Mobile Search */}
       {searchOpen && (
         <div className="md:hidden border-t border-border/50 px-4 py-3 bg-background">
           <div className="relative">
@@ -206,8 +217,6 @@ export function Header() {
               </button>
             )}
           </div>
-
-          {/* Mobile results */}
           {loading && (
             <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" /> מחפש...
@@ -219,27 +228,7 @@ export function Header() {
           {!loading && results.length > 0 && (
             <div className="mt-2 flex flex-col border border-border rounded-xl overflow-hidden">
               {results.map(item => (
-                <Link
-                  key={`${item.type}-${item.id}`}
-                  href={item.type === 'store' ? `/store/${item.slug}` : `/coupon/${item.slug}`}
-                  onClick={() => setTimeout(() => { setSearchOpen(false); clearSearch(); }, 100)}
-                  className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted transition-colors border-b border-border/50 last:border-0"
-                >
-                  {(item.store?.logo_url || item.logo_url) && (
-                    <div className="w-7 h-7 rounded-lg border bg-white flex items-center justify-center shrink-0 overflow-hidden">
-                      <Image src={item.store?.logo_url || item.logo_url || ''} alt="" width={28} height={28} className="object-contain" />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{item.title || item.name}</p>
-                    {item.store && <p className="text-xs text-muted-foreground">{item.store.name}</p>}
-                  </div>
-                  {getDiscountLabel(item) && (
-                    <span className="text-xs font-bold bg-brand/10 text-brand px-2 py-0.5 rounded-full shrink-0">
-                      {getDiscountLabel(item)}
-                    </span>
-                  )}
-                </Link>
+                <ResultItem key={`${item.type}-${item.id}`} item={item} mobile />
               ))}
             </div>
           )}
@@ -253,7 +242,6 @@ export function Header() {
             <Link
               key={link.href}
               href={link.href}
-              onClick={() => setMenuOpen(false)}
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2 px-3 rounded-lg hover:bg-muted"
             >
               {link.label}
