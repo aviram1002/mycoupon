@@ -10,7 +10,6 @@ interface HeroProps {
 export function Hero({ title, subtitle }: HeroProps) {
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-brand-dark to-brand py-20 md:py-28">
-      {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-white/5 blur-3xl" />
         <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-white/5 blur-3xl" />
@@ -18,7 +17,6 @@ export function Hero({ title, subtitle }: HeroProps) {
       </div>
 
       <div className="container relative text-center text-white">
-        {/* Pill badge */}
         <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5 text-sm font-medium mb-6">
           <Sparkles className="h-3.5 w-3.5 text-yellow-300" />
           הצטרפו לחיסכון
@@ -26,7 +24,6 @@ export function Hero({ title, subtitle }: HeroProps) {
 
         <h1 className="text-4xl md:text-6xl font-black leading-tight mb-4 text-white">
           {title.split(' ').map((word, i, arr) => {
-            // Highlight specific keywords
             const highlighted = ['השווים', 'הנחות', 'מבצעים'];
             return (
               <span key={i}>
@@ -50,12 +47,12 @@ export function Hero({ title, subtitle }: HeroProps) {
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
-          <Button asChild size="lg" variant="outline" className="border-white/40 text-white hover:bg-white/10 font-medium">
+          {/* תוקן: טקסט כהה על רקע שקוף */}
+          <Button asChild size="lg" className="bg-white/15 border border-white/40 text-white hover:bg-white/25 font-medium backdrop-blur-sm">
             <Link href="/about">איך זה עובד?</Link>
           </Button>
         </div>
 
-        {/* Stats */}
         <div className="flex justify-center gap-8 mt-12 text-center">
           {[
             { value: '1,500+', label: 'קופונים פעילים' },

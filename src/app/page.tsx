@@ -16,17 +16,16 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   const [settings, stores, coupons, categories] = await Promise.all([
     getSiteSettings(),
-    getStores({ featured: true, limit: 6 }),
+    getStores({ featured: true, limit: 18 }), // 3 שורות של 6
     getCoupons({ featured: true, limit: 6 }),
     getCategories(),
   ]);
 
   return (
     <div>
-      {/* Hero */}
       <Hero title={settings.hero_title} subtitle={settings.hero_subtitle} />
 
-      {/* Featured Stores */}
+      {/* Featured Stores - 3 rows */}
       <section className="container py-12">
         <SectionTitle
           title="חנויות מובילות"
@@ -68,7 +67,7 @@ export default async function HomePage() {
               className="flex flex-col items-center p-5 bg-card rounded-2xl border hover:border-brand/30 hover:shadow-md transition-all hover:-translate-y-0.5 group"
             >
               <span className="text-3xl mb-2">{cat.icon}</span>
-              <span className="text-sm font-semibold text-foreground group-hover:text-brand transition-colors">
+              <span className="text-sm font-semibold text-foreground group-hover:text-brand transition-colors text-center">
                 {cat.name}
               </span>
             </Link>

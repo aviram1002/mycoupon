@@ -1,13 +1,15 @@
 'use client';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, Tag, Store, HelpCircle, Settings } from 'lucide-react';
+import { LayoutDashboard, Tag, Store, HelpCircle, Settings, Grid3x3, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/admin', label: 'סקירה כללית', icon: LayoutDashboard, exact: true },
   { href: '/admin/coupons', label: 'ניהול קופונים', icon: Tag },
   { href: '/admin/stores', label: 'ניהול חנויות', icon: Store },
+  { href: '/admin/categories', label: 'ניהול קטגוריות', icon: Grid3x3 },
+  { href: '/admin/pages', label: 'ניהול דפים', icon: FileText },
   { href: '/admin/faqs', label: 'ניהול שאלות', icon: HelpCircle },
   { href: '/admin/settings', label: 'הגדרות', icon: Settings },
 ];

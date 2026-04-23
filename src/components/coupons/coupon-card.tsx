@@ -26,12 +26,12 @@ export function CouponCard({ coupon, onOpenPopup, showStore = false }: CouponCar
   return (
     <div className={`group relative bg-card rounded-2xl border overflow-hidden transition-all hover:shadow-md hover:-translate-y-0.5 ${expired ? 'opacity-60' : ''}`}>
       {/* Image */}
-      <div className="relative h-36 bg-muted overflow-hidden">
+      <div className="relative h-44 bg-muted overflow-hidden">
         <Image
           src={imageUrl}
           alt={coupon.title}
           fill
-          className="object-cover group-hover:scale-105 transition-transform duration-300"
+          className="object-contain group-hover:scale-105 transition-transform duration-300 p-2"
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.src = store?.logo_url || '/placeholder-coupon.png';
